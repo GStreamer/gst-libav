@@ -175,6 +175,7 @@ gst_ffmpegcsp_connect (GstPad *pad, const GstCaps2 *caps)
     other_format = &space->from_pixfmt;
   } else {
     g_assert_not_reached ();
+    return GST_PAD_LINK_REFUSED;
   }
   ctx = avcodec_alloc_context ();
   ctx->width = 0;
