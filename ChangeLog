@@ -1,3 +1,9 @@
+2005-02-20  Ronald S. Bultje  <rbultje@ronald.bitfreak.net>
+
+	* ext/ffmpeg/gstffmpegdec.c: (gst_ffmpegdec_open),
+	(gst_ffmpegdec_frame), (gst_ffmpegdec_sink_event):
+	  Implement accurate seeking, fix keyframe seeking.
+
 2005-02-05  Ronald S. Bultje  <rbultje@ronald.bitfreak.net>
 
 	* ext/ffmpeg/gstffmpegdec.c: (gst_ffmpegdec_frame):

@@ -57,7 +57,8 @@ struct _GstFFMpegDec
       gint channels, samplerate;
     } audio;
   } format;
-  guint64 next_ts;
+  guint64 next_ts, synctime;
+  gboolean need_key;
 
   /* parsing */
   AVCodecParserContext *pctx;
@@ -413,6 +414,8 @@ gst_ffmpegdec_open (GstFFMpegDec *ffmpegdec)
       break;
   }
   ffmpegdec->next_ts = 0;
+  ffmpegdec->synctime = GST_CLOCK_TIME_NONE;
+  ffmpegdec->need_key = TRUE;
 
   return TRUE;
 }
@@ -629,15 +632,50 @@ gst_ffmpegdec_frame (GstFFMpegDec * ffmpegdec,
           ffmpegdec->picture, &have_data, data, size);
       GST_DEBUG_OBJECT (ffmpegdec,
           "Decode video: len=%d, have_data=%d", len, have_data);
+      if (ffmpegdec->need_key) {
+        if (ffmpegdec->picture->pict_type == FF_I_TYPE) {
+          ffmpegdec->need_key = FALSE;
+        } else {
+          GST_WARNING_OBJECT (ffmpegdec,
+              "Dropping non-keyframe (seek/init)");
+          have_data = 0;
+          break;
+        }
+      }
+
+      /* note that ffmpeg sometimes gets the FPS wrong.
+       * For B-frame containing movies, we get all pictures delayed
+       * except for the I frames, so we synchronize only on I frames
+       * and keep an internal counter based on FPS for the others. */
+      if ((ffmpegdec->picture->pict_type == FF_I_TYPE ||
+           !GST_CLOCK_TIME_IS_VALID (ffmpegdec->next_ts)) &&
+          GST_CLOCK_TIME_IS_VALID (*in_ts)) {
+        ffmpegdec->next_ts = *in_ts;
+      }
+
+      /* precise seeking.... */
+      if (GST_CLOCK_TIME_IS_VALID (ffmpegdec->synctime)) {
+        if (ffmpegdec->next_ts >= ffmpegdec->synctime) {
+          ffmpegdec->synctime = GST_CLOCK_TIME_NONE;
+        } else {
+          GST_WARNING_OBJECT (ffmpegdec,
+              "Dropping frame for synctime %" GST_TIME_FORMAT ", expected %"
+              GST_TIME_FORMAT, GST_TIME_ARGS (ffmpegdec->synctime),
+              GST_TIME_ARGS (ffmpegdec->next_ts));
+          have_data = 0;
+          /* don´t break here! Timestamps are updated below */
+        }
+      }
 
       if (len >= 0 && have_data > 0) {
         /* libavcodec constantly crashes on stupid buffer allocation
          * errors inside. This drives me crazy, so we let it allocate
          * it's own buffers and copy to our own buffer afterwards... */
         AVPicture pic;
-        gint fsize = gst_ffmpeg_avpicture_get_size (ffmpegdec->context->pix_fmt,
-            ffmpegdec->context->width, ffmpegdec->context->height);
+        gint fsize;
 
+        fsize = gst_ffmpeg_avpicture_get_size (ffmpegdec->context->pix_fmt,
+            ffmpegdec->context->width, ffmpegdec->context->height);
         outbuf = gst_buffer_new_and_alloc (fsize);
 
         /* original ffmpeg code does not handle odd sizes correctly.
@@ -654,16 +692,6 @@ gst_ffmpegdec_frame (GstFFMpegDec * ffmpegdec,
             ffmpegdec->context->pix_fmt,
             ffmpegdec->context->width, 
             ffmpegdec->context->height);
-
-        /* note that ffmpeg sometimes gets the FPS wrong.
-         * For B-frame containing movies, we get all pictures delayed
-         * except for the I frames, so we synchronize only on I frames
-         * and keep an internal counter based on FPS for the others. */
-        if ((ffmpegdec->picture->pict_type == FF_I_TYPE ||
-             !GST_CLOCK_TIME_IS_VALID (ffmpegdec->next_ts)) &&
-            GST_CLOCK_TIME_IS_VALID (*in_ts)) {
-          ffmpegdec->next_ts = *in_ts;
-        }
 
         GST_BUFFER_TIMESTAMP (outbuf) = ffmpegdec->next_ts;
         if (ffmpegdec->context->frame_rate_base != 0 &&
@@ -814,6 +842,8 @@ gst_ffmpegdec_sink_event (GstPad * pad, GstEvent * event)
       if (ffmpegdec->opened) {
         avcodec_flush_buffers (ffmpegdec->context);
       }
+      ffmpegdec->need_key = TRUE;
+      ffmpegdec->synctime = ffmpegdec->next_ts;
       /* fall-through */
     }
     default:
