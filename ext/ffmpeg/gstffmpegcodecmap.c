@@ -41,14 +41,14 @@
     gst_caps2_new_simple (mimetype,			      	\
 	"width",     G_TYPE_INT,   context->width,	      	\
 	"height",    G_TYPE_INT,   context->height,	  	\
-	"framerate", G_TYPE_FLOAT, 1. * context->frame_rate /   \
+	"framerate", G_TYPE_DOUBLE, 1. * context->frame_rate /  \
 				   context->frame_rate_base,    \
 	##props, NULL)	  					\
     :	  							\
     gst_caps2_new_simple (mimetype,			      	\
-	"width",     GST_TYPE_INT_RANGE, 16, 4096,      	  	\
+	"width",     GST_TYPE_INT_RANGE, 16, 4096,      	\
 	"height",    GST_TYPE_INT_RANGE, 16, 4096,	      	\
-	"framerate", GST_TYPE_DOUBLE_RANGE, 0, G_MAXFLOAT,		\
+	"framerate", GST_TYPE_DOUBLE_RANGE, 0., G_MAXDOUBLE,	\
 	##props, NULL)
 
 /* same for audio - now with channels/sample rate
@@ -559,7 +559,7 @@ GstCaps2 *
 gst_ffmpeg_codectype_to_caps (enum CodecType  codec_type,
                               AVCodecContext *context)
 {
-  GstCaps2 *caps = NULL;
+  GstCaps2 *caps;
 
   switch (codec_type) {
     case CODEC_TYPE_VIDEO:
@@ -569,6 +569,7 @@ gst_ffmpeg_codectype_to_caps (enum CodecType  codec_type,
         GstCaps2 *temp;
         enum PixelFormat i;
 
+        caps = gst_caps2_new_empty ();
         for (i = 0; i < PIX_FMT_NB; i++) {
           temp = gst_ffmpeg_pixfmt_to_caps (i, NULL);
           if (temp != NULL) {
@@ -585,6 +586,7 @@ gst_ffmpeg_codectype_to_caps (enum CodecType  codec_type,
         GstCaps2 *temp;
         enum SampleFormat i;
 
+        caps = gst_caps2_new_empty ();
         for (i = 0; i <= SAMPLE_FMT_S16; i++) {
           temp = gst_ffmpeg_smpfmt_to_caps (i, NULL);
           if (temp != NULL) {
@@ -596,6 +598,7 @@ gst_ffmpeg_codectype_to_caps (enum CodecType  codec_type,
 
     default:
       /* .. */
+      caps = NULL;
       break;
   }
 
