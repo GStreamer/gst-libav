@@ -1,3 +1,17 @@
+2005-02-05  Ronald S. Bultje  <rbultje@ronald.bitfreak.net>
+
+	* configure.ac:
+	  Require 0.9.
+	* ext/ffmpeg/Makefile.am:
+	* ext/ffmpeg/gstffmpeg.c: (plugin_init):
+	  Disable protocol, demux, mux, enc.
+	* ext/ffmpeg/gstffmpegdec.c: (gst_ffmpegdec_class_init),
+	(gst_ffmpegdec_init), (gst_ffmpegdec_setcaps),
+	(gst_ffmpegdec_negotiate), (gst_ffmpegdec_frame),
+	(gst_ffmpegdec_sink_event), (gst_ffmpegdec_chain),
+	(gst_ffmpegdec_register):
+	  Port to 0.9.
+
 2005-02-04  Jan Schmidt  <thaytan@mad.scientist.com>
 
 	* ext/ffmpeg/gstffmpegdec.c: (gst_ffmpegdec_frame),

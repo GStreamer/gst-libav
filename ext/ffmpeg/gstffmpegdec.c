@@ -116,9 +116,9 @@ static gboolean gst_ffmpegdec_query (GstPad * pad, GstQueryType type,
     GstFormat * fmt, gint64 * value);
 static gboolean gst_ffmpegdec_event (GstPad * pad, GstEvent * event);
 
-static GstPadLinkReturn gst_ffmpegdec_connect (GstPad * pad,
-    const GstCaps * caps);
-static void gst_ffmpegdec_chain (GstPad * pad, GstData * data);
+static gboolean gst_ffmpegdec_setcaps (GstPad * pad, GstCaps * caps);
+static gboolean gst_ffmpegdec_sink_event (GstPad * pad, GstEvent * event);
+static GstFlowReturn gst_ffmpegdec_chain (GstPad * pad, GstBuffer * buf);
 
 static GstElementStateReturn gst_ffmpegdec_change_state (GstElement * element);
 
@@ -231,6 +231,11 @@ gst_ffmpegdec_class_init (GstFFMpegDecClass * klass)
 
   parent_class = g_type_class_peek_parent (klass);
 
+  gobject_class->dispose = gst_ffmpegdec_dispose;
+  gobject_class->set_property = gst_ffmpegdec_set_property;
+  gobject_class->get_property = gst_ffmpegdec_get_property;
+  gstelement_class->change_state = gst_ffmpegdec_change_state;
+
   g_object_class_install_property (gobject_class, ARG_SKIPFRAME,
       g_param_spec_enum ("skip-frame", "Skip frames",
           "Which types of frames to skip during decoding",
@@ -239,11 +244,6 @@ gst_ffmpegdec_class_init (GstFFMpegDecClass * klass)
       g_param_spec_enum ("lowres", "Low resolution",
           "At which resolution to decode images",
           GST_FFMPEGDEC_TYPE_LOWRES, 0, G_PARAM_READWRITE));
-
-  gobject_class->dispose = gst_ffmpegdec_dispose;
-  gobject_class->set_property = gst_ffmpegdec_set_property;
-  gobject_class->get_property = gst_ffmpegdec_get_property;
-  gstelement_class->change_state = gst_ffmpegdec_change_state;
 }
 
 static void
@@ -254,12 +254,13 @@ gst_ffmpegdec_init (GstFFMpegDec * ffmpegdec)
 
   /* setup pads */
   ffmpegdec->sinkpad = gst_pad_new_from_template (oclass->sinktempl, "sink");
-  gst_pad_set_link_function (ffmpegdec->sinkpad, gst_ffmpegdec_connect);
+  gst_pad_set_setcaps_function (ffmpegdec->sinkpad, gst_ffmpegdec_setcaps);
+  gst_pad_set_event_function (ffmpegdec->sinkpad, gst_ffmpegdec_sink_event);
   gst_pad_set_chain_function (ffmpegdec->sinkpad, gst_ffmpegdec_chain);
   gst_element_add_pad (GST_ELEMENT (ffmpegdec), ffmpegdec->sinkpad);
 
   ffmpegdec->srcpad = gst_pad_new_from_template (oclass->srctempl, "src");
-  gst_pad_use_explicit_caps (ffmpegdec->srcpad);
+  gst_pad_use_fixed_caps (ffmpegdec->srcpad);
   gst_pad_set_event_function (ffmpegdec->srcpad,
       GST_DEBUG_FUNCPTR (gst_ffmpegdec_event));
   gst_pad_set_query_function (ffmpegdec->srcpad,
@@ -274,8 +275,6 @@ gst_ffmpegdec_init (GstFFMpegDec * ffmpegdec)
   ffmpegdec->par = NULL;
   ffmpegdec->opened = FALSE;
   ffmpegdec->hurry_up = ffmpegdec->lowres = 0;
-
-  GST_FLAG_SET (ffmpegdec, GST_ELEMENT_EVENT_AWARE);
 }
 
 static void
@@ -419,7 +418,7 @@ gst_ffmpegdec_open (GstFFMpegDec *ffmpegdec)
 }
 
 static GstPadLinkReturn
-gst_ffmpegdec_connect (GstPad * pad, const GstCaps * caps)
+gst_ffmpegdec_setcaps (GstPad * pad, GstCaps * caps)
 {
   GstFFMpegDec *ffmpegdec = (GstFFMpegDec *) (gst_pad_get_parent (pad));
   GstFFMpegDecClass *oclass =
@@ -470,10 +469,10 @@ gst_ffmpegdec_connect (GstPad * pad, const GstCaps * caps)
       g_free (ffmpegdec->par);
       ffmpegdec->par = NULL;
     }
-    return GST_PAD_LINK_REFUSED;
+    return FALSE;
   }
 
-  return GST_PAD_LINK_OK;
+  return TRUE;
 }
 
 #if 0
@@ -596,18 +595,18 @@ gst_ffmpegdec_negotiate (GstFFMpegDec * ffmpegdec)
   }
 
   if (caps == NULL ||
-      !gst_pad_set_explicit_caps (ffmpegdec->srcpad, caps)) {
+      !gst_pad_set_caps (ffmpegdec->srcpad, caps)) {
     GST_ELEMENT_ERROR (ffmpegdec, CORE, NEGOTIATION, (NULL),
         ("Failed to link ffmpeg decoder (%s) to next element",
         oclass->in_plugin->name));
 
     if (caps != NULL)
-      gst_caps_free (caps);
+      gst_caps_unref (caps);
 
     return FALSE;
   }
 
-  gst_caps_free (caps);
+  gst_caps_unref (caps);
 
   return TRUE;
 }
@@ -628,6 +627,8 @@ gst_ffmpegdec_frame (GstFFMpegDec * ffmpegdec,
       ffmpegdec->picture->pict_type = -1; /* in case we skip frames */
       len = avcodec_decode_video (ffmpegdec->context,
           ffmpegdec->picture, &have_data, data, size);
+      if (ffmpegdec->picture->repeat_pict == 0)
+        ffmpegdec->picture->repeat_pict = 1;
       GST_DEBUG_OBJECT (ffmpegdec,
           "Decode video: len=%d, have_data=%d", len, have_data);
 
@@ -676,7 +677,7 @@ gst_ffmpegdec_frame (GstFFMpegDec * ffmpegdec,
           /* Take repeat_pict into account */
           GST_BUFFER_DURATION (outbuf) += GST_BUFFER_DURATION (outbuf)
               * ffmpegdec->picture->repeat_pict / 2;
-	  
+
           ffmpegdec->next_ts += GST_BUFFER_DURATION (outbuf);
         } else {
           ffmpegdec->next_ts = GST_CLOCK_TIME_NONE;
@@ -697,7 +698,7 @@ gst_ffmpegdec_frame (GstFFMpegDec * ffmpegdec,
 
           /* Take repeat_pict into account */
           dur += dur * ffmpegdec->picture->repeat_pict / 2;
-	  
+
           ffmpegdec->next_ts += dur;
         } else {
           ffmpegdec->next_ts = GST_CLOCK_TIME_NONE;
@@ -755,18 +756,18 @@ gst_ffmpegdec_frame (GstFFMpegDec * ffmpegdec,
       return -1;
     }
 
-    if (GST_PAD_IS_USABLE (ffmpegdec->srcpad))
-      gst_pad_push (ffmpegdec->srcpad, GST_DATA (outbuf));
-    else
-      gst_buffer_unref (outbuf);
+    gst_buffer_set_caps (outbuf, GST_PAD_CAPS (ffmpegdec->srcpad));
+    gst_pad_push (ffmpegdec->srcpad, outbuf);
   }
 
   return len;
 }
 
-static void
-gst_ffmpegdec_handle_event (GstFFMpegDec * ffmpegdec, GstEvent * event)
+static gboolean
+gst_ffmpegdec_sink_event (GstPad * pad, GstEvent * event)
 {
+  GstFFMpegDec *ffmpegdec = (GstFFMpegDec *) GST_OBJECT_PARENT (pad);
+
   GST_DEBUG_OBJECT (ffmpegdec,
       "Handling event of type %d", GST_EVENT_TYPE (event));
 
@@ -788,14 +789,16 @@ gst_ffmpegdec_handle_event (GstFFMpegDec * ffmpegdec, GstEvent * event)
       }
       goto forward;
     case GST_EVENT_DISCONTINUOUS: {
-      gint64 value;
+      gint64 value, end;
 
-      if (gst_event_discont_get_value (event, GST_FORMAT_TIME, &value)) {
+      if (gst_event_discont_get_value (event, GST_FORMAT_TIME,
+              &value, &end)) {
         ffmpegdec->next_ts = value;
         GST_DEBUG_OBJECT (ffmpegdec, "Discont to time %" GST_TIME_FORMAT,
             GST_TIME_ARGS (value));
       } else if (ffmpegdec->context->bit_rate &&
-          gst_event_discont_get_value (event, GST_FORMAT_BYTES, &value)) {
+          gst_event_discont_get_value (event, GST_FORMAT_BYTES,
+              &value, &end)) {
         gboolean new_media;
 
         ffmpegdec->next_ts = value * GST_SECOND / ffmpegdec->context->bit_rate;
@@ -822,31 +825,21 @@ gst_ffmpegdec_handle_event (GstFFMpegDec * ffmpegdec, GstEvent * event)
   }
 }
 
-static void
-gst_ffmpegdec_chain (GstPad * pad, GstData * _data)
+static GstFlowReturn
+gst_ffmpegdec_chain (GstPad * pad, GstBuffer * inbuf)
 {
-  GstBuffer *inbuf;
   GstFFMpegDec *ffmpegdec = (GstFFMpegDec *) (gst_pad_get_parent (pad));
   GstFFMpegDecClass *oclass =
       (GstFFMpegDecClass *) (G_OBJECT_GET_CLASS (ffmpegdec));
   guint8 *bdata, *data;
   gint bsize, size, len, have_data;
-  guint64 in_ts;
-
-  /* event handling */
-  if (GST_IS_EVENT (_data)) {
-    gst_ffmpegdec_handle_event (ffmpegdec, GST_EVENT (_data));
-    return;
-  }
-
-  inbuf = GST_BUFFER (_data);
-  in_ts = GST_BUFFER_TIMESTAMP (inbuf);
+  guint64 in_ts = GST_BUFFER_TIMESTAMP (inbuf);
 
   if (!ffmpegdec->opened) {
     GST_ELEMENT_ERROR (ffmpegdec, CORE, NEGOTIATION, (NULL),
         ("ffdec_%s: input format was not set before data start",
             oclass->in_plugin->name));
-    return;
+    return GST_FLOW_ERROR;
   }
 
   GST_DEBUG_OBJECT (ffmpegdec,
@@ -926,6 +919,8 @@ gst_ffmpegdec_chain (GstPad * pad, GstData * _data)
         GST_BUFFER_SIZE (inbuf) - bsize, bsize);
   }
   gst_buffer_unref (inbuf);
+
+  return GST_FLOW_OK;
 }
 
 static GstElementStateReturn
@@ -1037,8 +1032,8 @@ gst_ffmpegdec_register (GstPlugin * plugin)
       srccaps = gst_ffmpeg_codectype_to_caps (in_plugin->type, NULL);
     }
     if (!sinkcaps || !srccaps) {
-      if (sinkcaps) gst_caps_free (sinkcaps);
-      if (srccaps) gst_caps_free (srccaps);
+      if (sinkcaps) gst_caps_unref (sinkcaps);
+      if (srccaps) gst_caps_unref (srccaps);
       goto next;
     }
 

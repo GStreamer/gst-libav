@@ -3,12 +3,12 @@ plugin_LTLIBRARIES = libgstffmpeg.la
 
 libgstffmpeg_la_SOURCES = gstffmpeg.c 		\
 			  gstffmpegcodecmap.c	\
-			  gstffmpegdec.c 	\
-			  gstffmpegdemux.c 	\
-			  gstffmpegenc.c 	\
-			  gstffmpegmux.c 	\
-			  gstffmpegprotocol.c	\
-			  gstffmpegcolorspace.c
+			  gstffmpegdec.c 
+#			  gstffmpegdemux.c 	\
+#			  gstffmpegenc.c 	\
+#			  gstffmpegmux.c 	\
+#			  gstffmpegprotocol.c	\
+#			  gstffmpegcolorspace.c
 
 libgstffmpeg_la_CFLAGS = $(GST_CFLAGS) \
 	-I $(top_srcdir)/gst-libs/ext/ffmpeg/libavformat \

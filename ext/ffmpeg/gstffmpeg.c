@@ -68,22 +68,19 @@ gst_ffmpeg_log_callback (void * ptr, int level, const char * fmt, va_list vl)
 static gboolean
 plugin_init (GstPlugin * plugin)
 {
-  if (!gst_library_load ("gstbytestream"))
-    return FALSE;
-
   GST_DEBUG_CATEGORY_INIT (ffmpeg_debug, "ffmpeg", 0, "FFmpeg elements");
 #ifndef GST_DISABLE_GST_DEBUG
   av_log_set_callback (gst_ffmpeg_log_callback);
 #endif
   av_register_all ();
 
-  gst_ffmpegenc_register (plugin);
+  //gst_ffmpegenc_register (plugin);
   gst_ffmpegdec_register (plugin);
-  gst_ffmpegdemux_register (plugin);
+  //gst_ffmpegdemux_register (plugin);
   /*gst_ffmpegmux_register (plugin); */
-  gst_ffmpegcsp_register (plugin);
+  //gst_ffmpegcsp_register (plugin);
 
-  register_protocol (&gstreamer_protocol);
+  //register_protocol (&gstreamer_protocol);
 
   /* Now we can return the pointer to the newly created Plugin object. */
   return TRUE;
