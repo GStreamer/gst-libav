@@ -627,8 +627,6 @@ gst_ffmpegdec_frame (GstFFMpegDec * ffmpegdec,
       ffmpegdec->picture->pict_type = -1; /* in case we skip frames */
       len = avcodec_decode_video (ffmpegdec->context,
           ffmpegdec->picture, &have_data, data, size);
-      if (ffmpegdec->picture->repeat_pict == 0)
-        ffmpegdec->picture->repeat_pict = 1;
       GST_DEBUG_OBJECT (ffmpegdec,
           "Decode video: len=%d, have_data=%d", len, have_data);
 

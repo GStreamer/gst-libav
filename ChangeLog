@@ -1,5 +1,10 @@
 2005-02-05  Ronald S. Bultje  <rbultje@ronald.bitfreak.net>
 
+	* ext/ffmpeg/gstffmpegdec.c: (gst_ffmpegdec_frame):
+	  That was not very smart...
+
+2005-02-05  Ronald S. Bultje  <rbultje@ronald.bitfreak.net>
+
 	* configure.ac:
 	  Require 0.9.
 	* ext/ffmpeg/Makefile.am:
