@@ -59,7 +59,7 @@ typedef struct _GstFFMpegDecClassParams GstFFMpegDecClassParams;
 
 struct _GstFFMpegDecClassParams {
   AVCodec *in_plugin;
-  GstCaps2 *srccaps, *sinkcaps;
+  GstCaps *srccaps, *sinkcaps;
 };
 
 #define GST_TYPE_FFMPEGDEC \
@@ -92,7 +92,7 @@ static void	gst_ffmpegdec_init		(GstFFMpegDec *ffmpegdec);
 static void	gst_ffmpegdec_dispose		(GObject      *object);
 
 static GstPadLinkReturn	gst_ffmpegdec_connect	(GstPad    *pad,
-						 const GstCaps2  *caps);
+						 const GstCaps  *caps);
 static void	gst_ffmpegdec_chain		(GstPad    *pad,
 						 GstData   *data);
 
@@ -206,7 +206,7 @@ gst_ffmpegdec_dispose (GObject *object)
 
 static GstPadLinkReturn
 gst_ffmpegdec_connect (GstPad  *pad,
-		       const GstCaps2 *caps)
+		       const GstCaps *caps)
 {
   GstFFMpegDec *ffmpegdec = (GstFFMpegDec *)(gst_pad_get_parent (pad));
   GstFFMpegDecClass *oclass = (GstFFMpegDecClass*)(G_OBJECT_GET_CLASS (ffmpegdec));
@@ -405,7 +405,7 @@ gst_ffmpegdec_chain (GstPad    *pad,
 
     if (have_data) {
       if (!GST_PAD_CAPS (ffmpegdec->srcpad)) {
-        GstCaps2 *caps;
+        GstCaps *caps;
         caps = gst_ffmpeg_codectype_to_caps (oclass->in_plugin->type,
 					     ffmpegdec->context);
         if (caps == NULL ||
@@ -473,7 +473,7 @@ gst_ffmpegdec_register (GstPlugin *plugin)
 
   while (in_plugin) {
     GstFFMpegDecClassParams *params;
-    GstCaps2 *srccaps, *sinkcaps;
+    GstCaps *srccaps, *sinkcaps;
     gchar *type_name;
 
     /* no quasi-codecs, please */

@@ -97,7 +97,7 @@ static void	gst_ffmpegcsp_init		(GTypeInstance *instance, gpointer g_class);
 
 static GstPadLinkReturn
 		gst_ffmpegcsp_connect		(GstPad		*pad,
-						 const GstCaps2 *caps);
+						 const GstCaps *caps);
 static GstPadLinkReturn
 		gst_ffmpegcsp_try_connect 	(GstPad		*pad,
 						 AVCodecContext	*ctx,
@@ -117,7 +117,7 @@ gst_ffmpegcsp_try_connect (GstPad *pad, AVCodecContext *ctx, double fps)
 {
   gint i, ret;
   GstFFMpegCsp *space;
-  GstCaps2 *caps;
+  GstCaps *caps;
   gboolean try_all = (ctx->pix_fmt != PIX_FMT_NB);
   
   space = GST_FFMPEG_CSP (gst_pad_get_parent (pad));
@@ -125,21 +125,21 @@ gst_ffmpegcsp_try_connect (GstPad *pad, AVCodecContext *ctx, double fps)
   /* loop over all possibilities and select the first one we can convert and
    * is accepted by the peer */
   caps = gst_ffmpeg_codectype_to_caps (CODEC_TYPE_VIDEO, ctx);
-  for (i = 0; i < gst_caps2_get_n_structures (caps); i++) {
-    GstStructure *structure = gst_caps2_get_nth_cap (caps, i);
-    GstCaps2 *setcaps;
+  for (i = 0; i < gst_caps_get_size (caps); i++) {
+    GstStructure *structure = gst_caps_get_structure (caps, i);
+    GstCaps *setcaps;
 
     if (fps > 0)
       gst_structure_set (structure, "framerate", G_TYPE_DOUBLE, fps, NULL);
 
-    setcaps = gst_caps2_new_full (gst_structure_copy (structure), NULL);
+    setcaps = gst_caps_new_full (gst_structure_copy (structure), NULL);
     
     ret = gst_pad_try_set_caps (pad, setcaps);
-    gst_caps2_free (setcaps);
+    gst_caps_free (setcaps);
     if (ret >= 0) {
       if (ctx->pix_fmt == PIX_FMT_NB)
 	gst_ffmpeg_caps_to_codectype (CODEC_TYPE_VIDEO, caps, ctx);
-      gst_caps2_free (caps);
+      gst_caps_free (caps);
 
       return ret;
     }
@@ -154,7 +154,7 @@ gst_ffmpegcsp_try_connect (GstPad *pad, AVCodecContext *ctx, double fps)
 }
 
 static GstPadLinkReturn
-gst_ffmpegcsp_connect (GstPad *pad, const GstCaps2 *caps)
+gst_ffmpegcsp_connect (GstPad *pad, const GstCaps *caps)
 {
   AVCodecContext *ctx;
   GstFFMpegCsp *space;
@@ -188,7 +188,7 @@ gst_ffmpegcsp_connect (GstPad *pad, const GstCaps2 *caps)
     return GST_PAD_LINK_REFUSED;
   }
 
-  if (!gst_structure_get_double (gst_caps2_get_nth_cap (caps, 0), 
+  if (!gst_structure_get_double (gst_caps_get_structure (caps, 0), 
 	"framerate", &fps))
     fps = 0;
   
@@ -249,12 +249,12 @@ gst_ffmpegcsp_get_type (void)
 static void
 gst_ffmpegcsp_base_init (gpointer g_class)
 {
-  GstCaps2 *caps, *capscopy;
+  GstCaps *caps, *capscopy;
   GstElementClass *element_class = GST_ELEMENT_CLASS (g_class);
 
   /* template caps */
   caps = gst_ffmpeg_codectype_to_caps (CODEC_TYPE_VIDEO, NULL);
-  capscopy = gst_caps2_copy (caps);
+  capscopy = gst_caps_copy (caps);
   
   /* build templates */
   gst_element_class_add_pad_template (element_class, 

@@ -38,14 +38,14 @@
 
 #define GST_FF_VID_CAPS_NEW(mimetype, props...)			\
     (context != NULL) ?						\
-    gst_caps2_new_simple (mimetype,			      	\
+    gst_caps_new_simple (mimetype,			      	\
 	"width",     G_TYPE_INT,   context->width,	      	\
 	"height",    G_TYPE_INT,   context->height,	  	\
 	"framerate", G_TYPE_DOUBLE, 1. * context->frame_rate /  \
 				   context->frame_rate_base,    \
 	##props, NULL)	  					\
     :	  							\
-    gst_caps2_new_simple (mimetype,			      	\
+    gst_caps_new_simple (mimetype,			      	\
 	"width",     GST_TYPE_INT_RANGE, 16, 4096,      	\
 	"height",    GST_TYPE_INT_RANGE, 16, 4096,	      	\
 	"framerate", GST_TYPE_DOUBLE_RANGE, 0., G_MAXDOUBLE,	\
@@ -56,12 +56,12 @@
 
 #define GST_FF_AUD_CAPS_NEW(mimetype, props...)			\
     (context != NULL) ?					      	\
-    gst_caps2_new_simple (mimetype,	      			\
+    gst_caps_new_simple (mimetype,	      			\
 	"rate", G_TYPE_INT, context->sample_rate,		\
 	"channels", G_TYPE_INT, context->channels,		\
 	##props, NULL)						\
     :								\
-    gst_caps2_new_simple (mimetype,	      			\
+    gst_caps_new_simple (mimetype,	      			\
 	##props, NULL)
 
 /* Convert a FFMPEG codec ID and optional AVCodecContext
@@ -71,16 +71,16 @@
  * CodecID is primarily meant for compressed data GstCaps!
  */
 
-GstCaps2 *
+GstCaps *
 gst_ffmpeg_codecid_to_caps (enum CodecID    codec_id,
                             AVCodecContext *context)
 {
-  GstCaps2 *caps = NULL;
+  GstCaps *caps = NULL;
 
   switch (codec_id) {
     case CODEC_ID_MPEG1VIDEO:
       /* this caps doesn't need width/height/framerate */
-      caps = gst_caps2_new_simple ("video/mpeg",
+      caps = gst_caps_new_simple ("video/mpeg",
 	  "mpegversion",  G_TYPE_INT,	  1,
           "systemstream", G_TYPE_BOOLEAN, FALSE,
           NULL);
@@ -132,13 +132,13 @@ gst_ffmpeg_codecid_to_caps (enum CodecID    codec_id,
 	  "mpegversion",  G_TYPE_INT, 4,
           "systemstream", G_TYPE_BOOLEAN, FALSE,
 	  NULL);
-      gst_caps2_append(caps,
+      gst_caps_append(caps,
 	  GST_FF_VID_CAPS_NEW ("video/x-divx",
 	      "divxversion", GST_TYPE_INT_RANGE, 4, 5,
 	      NULL));
-      gst_caps2_append(caps,
+      gst_caps_append(caps,
              GST_FF_VID_CAPS_NEW ("video/x-xvid"));
-      gst_caps2_append(caps,
+      gst_caps_append(caps,
              GST_FF_VID_CAPS_NEW ("video/x-3ivx"));
       break;
 
@@ -163,7 +163,7 @@ gst_ffmpeg_codecid_to_caps (enum CodecID    codec_id,
       caps = GST_FF_VID_CAPS_NEW ("video/x-msmpeg",
 	  "msmpegversion", G_TYPE_INT, 43,
 	  NULL);
-      gst_caps2_append(caps,
+      gst_caps_append(caps,
           GST_FF_VID_CAPS_NEW ("video/x-divx",
 	      "divxversion", G_TYPE_INT, 3,
               NULL));
@@ -253,7 +253,7 @@ gst_ffmpeg_codecid_to_caps (enum CodecID    codec_id,
 
     case CODEC_ID_VP3:
       caps = GST_FF_VID_CAPS_NEW ("video/x-vp3");
-      gst_caps2_append(caps,
+      gst_caps_append(caps,
              GST_FF_VID_CAPS_NEW ("video/x-theora"));
       break;
 
@@ -395,7 +395,7 @@ gst_ffmpeg_codecid_to_caps (enum CodecID    codec_id,
   }
 
   if (caps != NULL) {
-    char *str = gst_caps2_to_string (caps);
+    char *str = gst_caps_to_string (caps);
     GST_DEBUG ("caps for codec_id=%d: %s", codec_id, str);
     g_free(str);
   } else {
@@ -412,11 +412,11 @@ gst_ffmpeg_codecid_to_caps (enum CodecID    codec_id,
  * See below for usefullness
  */
 
-static GstCaps2 *
+static GstCaps *
 gst_ffmpeg_pixfmt_to_caps (enum PixelFormat  pix_fmt,
                            AVCodecContext   *context)
 {
-  GstCaps2 *caps = NULL;
+  GstCaps *caps = NULL;
 
   int bpp = 0, depth = 0, endianness = 0;
   gulong g_mask = 0, r_mask = 0, b_mask = 0;
@@ -491,7 +491,7 @@ gst_ffmpeg_pixfmt_to_caps (enum PixelFormat  pix_fmt,
   }
 
   if (caps != NULL) {
-    char *str = gst_caps2_to_string (caps);
+    char *str = gst_caps_to_string (caps);
     GST_DEBUG ("caps for pix_fmt=%d: %s", pix_fmt, str);
     g_free(str);
   } else {
@@ -508,11 +508,11 @@ gst_ffmpeg_pixfmt_to_caps (enum PixelFormat  pix_fmt,
  * See below for usefullness
  */
 
-static GstCaps2 *
+static GstCaps *
 gst_ffmpeg_smpfmt_to_caps (enum SampleFormat  sample_fmt,
                            AVCodecContext    *context)
 {
-  GstCaps2 *caps = NULL;
+  GstCaps *caps = NULL;
 
   int bpp = 0;
   gboolean signedness = FALSE;
@@ -538,7 +538,7 @@ gst_ffmpeg_smpfmt_to_caps (enum SampleFormat  sample_fmt,
   }
 
   if (caps != NULL) {
-    char *str = gst_caps2_to_string (caps);
+    char *str = gst_caps_to_string (caps);
     GST_DEBUG ("caps for sample_fmt=%d: %s", sample_fmt, str);
     g_free(str);
   } else {
@@ -555,25 +555,25 @@ gst_ffmpeg_smpfmt_to_caps (enum SampleFormat  sample_fmt,
  * CodecType is primarily meant for uncompressed data GstCaps!
  */
 
-GstCaps2 *
+GstCaps *
 gst_ffmpeg_codectype_to_caps (enum CodecType  codec_type,
                               AVCodecContext *context)
 {
-  GstCaps2 *caps;
+  GstCaps *caps;
 
   switch (codec_type) {
     case CODEC_TYPE_VIDEO:
       if (context) {
         caps = gst_ffmpeg_pixfmt_to_caps (context->pix_fmt, context);
       } else {
-        GstCaps2 *temp;
+        GstCaps *temp;
         enum PixelFormat i;
 
-        caps = gst_caps2_new_empty ();
+        caps = gst_caps_new_empty ();
         for (i = 0; i < PIX_FMT_NB; i++) {
           temp = gst_ffmpeg_pixfmt_to_caps (i, NULL);
           if (temp != NULL) {
-            gst_caps2_append (caps, temp);
+            gst_caps_append (caps, temp);
           }
         }
       }
@@ -583,14 +583,14 @@ gst_ffmpeg_codectype_to_caps (enum CodecType  codec_type,
       if (context) {
         caps = gst_ffmpeg_smpfmt_to_caps (context->sample_fmt, context);
       } else {
-        GstCaps2 *temp;
+        GstCaps *temp;
         enum SampleFormat i;
 
-        caps = gst_caps2_new_empty ();
+        caps = gst_caps_new_empty ();
         for (i = 0; i <= SAMPLE_FMT_S16; i++) {
           temp = gst_ffmpeg_smpfmt_to_caps (i, NULL);
           if (temp != NULL) {
-            gst_caps2_append (caps, temp);
+            gst_caps_append (caps, temp);
           }
         }
       }
@@ -610,14 +610,14 @@ gst_ffmpeg_codectype_to_caps (enum CodecType  codec_type,
  * when needed.
  */
 static void
-gst_ffmpeg_caps_to_extradata (const GstCaps2 *caps,
+gst_ffmpeg_caps_to_extradata (const GstCaps *caps,
                               AVCodecContext *context)
 {
   GstStructure *structure;
   const gchar *mimetype;
 
-  g_return_if_fail (gst_caps2_get_n_structures (caps) == 1);
-  structure = gst_caps2_get_nth_cap (caps, 0);
+  g_return_if_fail (gst_caps_get_size (caps) == 1);
+  structure = gst_caps_get_structure (caps, 0);
   
   mimetype = gst_structure_get_name (structure);
 
@@ -670,15 +670,15 @@ gst_ffmpeg_caps_to_extradata (const GstCaps2 *caps,
  */
 
 static void
-gst_ffmpeg_caps_to_smpfmt (const GstCaps2 *caps,
+gst_ffmpeg_caps_to_smpfmt (const GstCaps *caps,
                            AVCodecContext *context)
 {
   GstStructure *structure;
   gint depth = 0, width = 0, endianness = 0;
   gboolean signedness = FALSE;
 
-  g_return_if_fail (gst_caps2_get_n_structures (caps) == 1);
-  structure = gst_caps2_get_nth_cap (caps, 0);
+  g_return_if_fail (gst_caps_get_size (caps) == 1);
+  structure = gst_caps_get_structure (caps, 0);
   
   if (gst_structure_get_int (structure, "width", &width) &&
       gst_structure_get_int (structure, "depth", &depth) &&
@@ -706,14 +706,14 @@ gst_ffmpeg_caps_to_smpfmt (const GstCaps2 *caps,
  */
 
 static void
-gst_ffmpeg_caps_to_pixfmt (const GstCaps2 *caps,
+gst_ffmpeg_caps_to_pixfmt (const GstCaps *caps,
                            AVCodecContext *context)
 {
   GstStructure *structure;
   gdouble fps;
   
-  g_return_if_fail (gst_caps2_get_n_structures (caps) == 1);
-  structure = gst_caps2_get_nth_cap (caps, 0);
+  g_return_if_fail (gst_caps_get_size (caps) == 1);
+  structure = gst_caps_get_structure (caps, 0);
   
   gst_structure_get_int (structure, "width", &context->width);
   gst_structure_get_int (structure, "height", &context->height);
@@ -796,7 +796,7 @@ gst_ffmpeg_caps_to_pixfmt (const GstCaps2 *caps,
 
 void
 gst_ffmpeg_caps_to_codectype (enum CodecType  type,
-                              const GstCaps2 *caps,
+                              const GstCaps *caps,
                               AVCodecContext *context)
 {
   if (context == NULL)
@@ -827,47 +827,47 @@ gst_ffmpeg_caps_to_codectype (enum CodecType  type,
  * media type anyway
  */
 
-GstCaps2 *
+GstCaps *
 gst_ffmpeg_formatid_to_caps (const gchar *format_name)
 {
-  GstCaps2 *caps = NULL;
+  GstCaps *caps = NULL;
 
   if (!strcmp (format_name, "mpeg")) {
-    caps = gst_caps2_new_simple ("video/mpeg",
+    caps = gst_caps_new_simple ("video/mpeg",
 	"systemstream", G_TYPE_BOOLEAN, TRUE,
         NULL);
   } else if (!strcmp (format_name, "mpegts")) {
-    caps = gst_caps2_new_simple ("video/mpegts",
+    caps = gst_caps_new_simple ("video/mpegts",
 	"systemstream", G_TYPE_BOOLEAN, TRUE,
         NULL);
   } else if (!strcmp (format_name, "rm")) {
-    caps = gst_caps2_new_simple ("ffmpeg_rm", "audio/x-pn-realvideo",
+    caps = gst_caps_new_simple ("ffmpeg_rm", "audio/x-pn-realvideo",
 	"systemstream", G_TYPE_BOOLEAN, TRUE,
         NULL);
   } else if (!strcmp (format_name, "asf")) {
-    caps = gst_caps2_new_simple ("video/x-ms-asf",
+    caps = gst_caps_new_simple ("video/x-ms-asf",
 	NULL);
   } else if (!strcmp (format_name, "avi")) {
-    caps = gst_caps2_new_simple ("video/x-msvideo",
+    caps = gst_caps_new_simple ("video/x-msvideo",
 	NULL);
   } else if (!strcmp (format_name, "wav")) {
-    caps = gst_caps2_new_simple ("video/x-wav",
+    caps = gst_caps_new_simple ("video/x-wav",
 	NULL);
   } else if (!strcmp (format_name, "swf")) {
-    caps = gst_caps2_new_simple ("application/x-shockwave-flash",
+    caps = gst_caps_new_simple ("application/x-shockwave-flash",
 	NULL);
   } else if (!strcmp (format_name, "au")) {
-    caps = gst_caps2_new_simple ("audio/x-au",
+    caps = gst_caps_new_simple ("audio/x-au",
 	NULL);
   } else if (!strcmp (format_name, "mov")) {
-    caps = gst_caps2_new_simple ("video/quicktime",
+    caps = gst_caps_new_simple ("video/quicktime",
 	NULL);
   } else if (!strcmp (format_name, "dv")) {
-    caps = gst_caps2_new_simple ("video/x-dv",
+    caps = gst_caps_new_simple ("video/x-dv",
 	"systemstream", G_TYPE_BOOLEAN, TRUE,
 	NULL);
   } else if (!strcmp (format_name, "4xm")) {
-    caps = gst_caps2_new_simple ("video/x-4xm",
+    caps = gst_caps_new_simple ("video/x-4xm",
 	NULL);
   } else {
     /* unknown! */
@@ -884,7 +884,7 @@ gst_ffmpeg_formatid_to_caps (const gchar *format_name)
  */
 
 enum CodecID
-gst_ffmpeg_caps_to_codecid (const GstCaps2 *caps,
+gst_ffmpeg_caps_to_codecid (const GstCaps *caps,
                             AVCodecContext *context)
 {
   enum CodecID id = CODEC_ID_NONE;
@@ -893,8 +893,8 @@ gst_ffmpeg_caps_to_codecid (const GstCaps2 *caps,
   gboolean video = FALSE, audio = FALSE; /* we want to be sure! */
 
   g_return_val_if_fail (caps != NULL, CODEC_ID_NONE);
-  g_return_val_if_fail (gst_caps2_get_n_structures (caps) == 1, CODEC_ID_NONE);
-  structure = gst_caps2_get_nth_cap (caps, 0);
+  g_return_val_if_fail (gst_caps_get_size (caps) == 1, CODEC_ID_NONE);
+  structure = gst_caps_get_structure (caps, 0);
   
   mimetype = gst_structure_get_name (structure);
 
@@ -1352,7 +1352,7 @@ gst_ffmpeg_caps_to_codecid (const GstCaps2 *caps,
   }
 
   if (id != CODEC_ID_NONE) {
-    char *str = gst_caps2_to_string (caps);
+    char *str = gst_caps_to_string (caps);
     GST_DEBUG ("The id=%d belongs to the caps %s", id, str);
     g_free(str);
   }

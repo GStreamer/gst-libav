@@ -51,7 +51,7 @@ struct _GstFFMpegDemux {
 
 typedef struct _GstFFMpegDemuxClassParams {
   AVInputFormat 	*in_plugin;
-  GstCaps2		*sinkcaps, *videosrccaps, *audiosrccaps;
+  GstCaps		*sinkcaps, *videosrccaps, *audiosrccaps;
 } GstFFMpegDemuxClassParams;
 
 typedef struct _GstFFMpegDemuxClass GstFFMpegDemuxClass;
@@ -287,7 +287,7 @@ gst_ffmpegdemux_loop (GstElement *element)
   /* create the pad/stream if we didn't do so already */
   if (st->codec_info_state == 0) {
     GstPadTemplate *templ = NULL;
-    GstCaps2 *caps;
+    GstCaps *caps;
     gchar *padname;
     gint num;
 
@@ -398,7 +398,7 @@ gst_ffmpegdemux_register (GstPlugin *plugin)
     0,
     (GInstanceInitFunc)gst_ffmpegdemux_init,
   };
-  GstCaps2 *any_caps = gst_caps2_new_any ();
+  GstCaps *any_caps = gst_caps_new_any ();
   
   in_plugin = first_iformat;
 
@@ -407,7 +407,7 @@ gst_ffmpegdemux_register (GstPlugin *plugin)
   while (in_plugin) {
     gchar *type_name, *typefind_name;
     gchar *p;
-    GstCaps2 *sinkcaps, *audiosrccaps, *videosrccaps;
+    GstCaps *sinkcaps, *audiosrccaps, *videosrccaps;
 
     /* Try to find the caps that belongs here */
     sinkcaps = gst_ffmpeg_formatid_to_caps (in_plugin->name);
@@ -421,19 +421,19 @@ gst_ffmpegdemux_register (GstPlugin *plugin)
     videosrccaps = NULL;
     for (in_codec = first_avcodec; in_codec != NULL;
 	 in_codec = in_codec->next) {
-      GstCaps2 *temp = gst_ffmpeg_codecid_to_caps (in_codec->id, NULL);
+      GstCaps *temp = gst_ffmpeg_codecid_to_caps (in_codec->id, NULL);
       if (!temp) {
         continue;
       }
       switch (in_codec->type) {
         case CODEC_TYPE_VIDEO:
-          gst_caps2_append (videosrccaps, temp);
+          gst_caps_append (videosrccaps, temp);
           break;
         case CODEC_TYPE_AUDIO:
-          gst_caps2_append (audiosrccaps, temp);
+          gst_caps_append (audiosrccaps, temp);
           break;
         default:
-          gst_caps2_free (temp);
+          gst_caps_free (temp);
           break;
       }
     }
@@ -484,7 +484,7 @@ gst_ffmpegdemux_register (GstPlugin *plugin)
 next:
     in_plugin = in_plugin->next;
   }
-  gst_caps2_free (any_caps);
+  gst_caps_free (any_caps);
   g_hash_table_remove (global_plugins, GINT_TO_POINTER (0));
 
   return TRUE;

@@ -64,7 +64,7 @@ struct _GstFFMpegEncClass {
 
 typedef struct {
   AVCodec *in_plugin;
-  GstCaps2 *srccaps, *sinkcaps;
+  GstCaps *srccaps, *sinkcaps;
 } GstFFMpegEncClassParams;
 
 #define GST_TYPE_FFMPEGENC \
@@ -123,7 +123,7 @@ static void	gst_ffmpegenc_init		(GstFFMpegEnc *ffmpegenc);
 static void	gst_ffmpegenc_dispose		(GObject *object);
 
 static GstPadLinkReturn
-		gst_ffmpegenc_connect		(GstPad *pad, const GstCaps2 *caps);
+		gst_ffmpegenc_connect		(GstPad *pad, const GstCaps *caps);
 static void	gst_ffmpegenc_chain_video	(GstPad *pad, GstData *_data);
 static void	gst_ffmpegenc_chain_audio	(GstPad *pad, GstData *_data);
 
@@ -282,9 +282,9 @@ gst_ffmpegenc_dispose (GObject *object)
 
 static GstPadLinkReturn
 gst_ffmpegenc_connect (GstPad  *pad,
-		       const GstCaps2 *caps)
+		       const GstCaps *caps)
 {
-  GstCaps2 *other_caps;
+  GstCaps *other_caps;
   GstPadLinkReturn ret;
   enum PixelFormat pix_fmt;
   GstFFMpegEnc *ffmpegenc = (GstFFMpegEnc *) gst_pad_get_parent (pad);
@@ -594,7 +594,7 @@ gst_ffmpegenc_register (GstPlugin *plugin)
 
   while (in_plugin) {
     gchar *type_name;
-    GstCaps2 *srccaps, *sinkcaps;
+    GstCaps *srccaps, *sinkcaps;
     GstFFMpegEncClassParams *params;
 
     /* no quasi codecs, please */

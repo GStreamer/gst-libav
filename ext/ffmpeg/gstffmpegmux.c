@@ -51,7 +51,7 @@ struct _GstFFMpegMux {
 
 typedef struct _GstFFMpegMuxClassParams {
   AVOutputFormat 	*in_plugin;
-  GstCaps2		*srccaps, *videosinkcaps, *audiosinkcaps;
+  GstCaps		*srccaps, *videosinkcaps, *audiosinkcaps;
 } GstFFMpegMuxClassParams;
 
 typedef struct _GstFFMpegMuxClass GstFFMpegMuxClass;
@@ -96,7 +96,7 @@ static void	gst_ffmpegmux_dispose		(GObject *object);
 
 static GstPadLinkReturn
 		gst_ffmpegmux_connect		(GstPad  *pad,
-						 const GstCaps2 *caps);
+						 const GstCaps *caps);
 static GstPad *	gst_ffmpegmux_request_new_pad	(GstElement *element,
 						 GstPadTemplate *templ,
 						 const gchar *name);
@@ -272,7 +272,7 @@ gst_ffmpegmux_request_new_pad (GstElement *element,
 
 static GstPadLinkReturn
 gst_ffmpegmux_connect (GstPad  *pad,
-		       const GstCaps2 *caps)
+		       const GstCaps *caps)
 {
   GstFFMpegMux *ffmpegmux = (GstFFMpegMux *)(gst_pad_get_parent (pad));
   gint i;
@@ -458,7 +458,7 @@ gst_ffmpegmux_register (GstPlugin *plugin)
   while (in_plugin) {
     gchar *type_name;
     gchar *p;
-    GstCaps2 *srccaps, *audiosinkcaps, *videosinkcaps;
+    GstCaps *srccaps, *audiosinkcaps, *videosinkcaps;
 
     /* Try to find the caps that belongs here */
     srccaps = gst_ffmpeg_formatid_to_caps (in_plugin->name);
@@ -472,19 +472,19 @@ gst_ffmpegmux_register (GstPlugin *plugin)
     videosinkcaps = NULL;
     for (in_codec = first_avcodec; in_codec != NULL;
 	 in_codec = in_codec->next) {
-      GstCaps2 *temp = gst_ffmpeg_codecid_to_caps (in_codec->id, NULL);
+      GstCaps *temp = gst_ffmpeg_codecid_to_caps (in_codec->id, NULL);
       if (!temp) {
         continue;
       }
       switch (in_codec->type) {
         case CODEC_TYPE_VIDEO:
-          gst_caps2_append (videosinkcaps, temp);
+          gst_caps_append (videosinkcaps, temp);
           break;
         case CODEC_TYPE_AUDIO:
-          gst_caps2_append (audiosinkcaps, temp);
+          gst_caps_append (audiosinkcaps, temp);
           break;
         default:
-          gst_caps2_free (temp);
+          gst_caps_free (temp);
           break;
       }
     }
