@@ -31,7 +31,7 @@
  * a certain CodecID for a pad with compressed data.
  */
 
-GstCaps *
+GstCaps2 *
 gst_ffmpeg_codecid_to_caps   (enum CodecID    codec_id,
                               AVCodecContext *context);
 
@@ -39,7 +39,7 @@ gst_ffmpeg_codecid_to_caps   (enum CodecID    codec_id,
  * a certain CodecType for a pad with uncompressed data.
  */
 
-GstCaps *
+GstCaps2 *
 gst_ffmpeg_codectype_to_caps (enum CodecType  codec_type,
                               AVCodecContext *context);
 
@@ -49,7 +49,7 @@ gst_ffmpeg_codectype_to_caps (enum CodecType  codec_type,
  */
 
 enum CodecID
-gst_ffmpeg_caps_to_codecid (GstCaps        *caps,
+gst_ffmpeg_caps_to_codecid (const GstCaps2 *caps,
                             AVCodecContext *context);
 
 /* caps_to_codectype () transforms a GstCaps that belongs to
@@ -58,7 +58,7 @@ gst_ffmpeg_caps_to_codecid (GstCaps        *caps,
 
 void
 gst_ffmpeg_caps_to_codectype (enum CodecType  type,
-                              GstCaps        *caps,
+                              const GstCaps2 *caps,
                               AVCodecContext *context);
 
 /* _formatid_to_caps () is meant for muxers/demuxers, it
@@ -67,7 +67,7 @@ gst_ffmpeg_caps_to_codectype (enum CodecType  type,
  * caps belonging to that mux-format
  */
 
-GstCaps *
+GstCaps2 *
 gst_ffmpeg_formatid_to_caps (const gchar *format_name);
 
 #endif /* __GST_FFMPEG_CODECMAP_H__ */
