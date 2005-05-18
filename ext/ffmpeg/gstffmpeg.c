@@ -74,7 +74,7 @@ plugin_init (GstPlugin * plugin)
 #endif
   av_register_all ();
 
-  //gst_ffmpegenc_register (plugin);
+  gst_ffmpegenc_register (plugin);
   gst_ffmpegdec_register (plugin);
   //gst_ffmpegdemux_register (plugin);
   /*gst_ffmpegmux_register (plugin); */

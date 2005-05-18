@@ -113,8 +113,7 @@ static void gst_ffmpegdec_class_init (GstFFMpegDecClass * klass);
 static void gst_ffmpegdec_init (GstFFMpegDec * ffmpegdec);
 static void gst_ffmpegdec_dispose (GObject * object);
 
-static gboolean gst_ffmpegdec_query (GstPad * pad, GstQueryType type,
-    GstFormat * fmt, gint64 * value);
+static gboolean gst_ffmpegdec_query (GstPad * pad, GstQuery *query);
 static gboolean gst_ffmpegdec_event (GstPad * pad, GstEvent * event);
 
 static gboolean gst_ffmpegdec_setcaps (GstPad * pad, GstCaps * caps);
@@ -293,19 +292,24 @@ gst_ffmpegdec_dispose (GObject * object)
 }
 
 static gboolean
-gst_ffmpegdec_query (GstPad * pad, GstQueryType type,
-    GstFormat * fmt, gint64 * value)
+gst_ffmpegdec_query (GstPad * pad, GstQuery *query)
 {
-  GstFFMpegDec *ffmpegdec = (GstFFMpegDec *) gst_pad_get_parent (pad);
-  GstPad *peer = GST_PAD_PEER (ffmpegdec->sinkpad);
-  GstFormat bfmt = GST_FORMAT_BYTES;
+  GstFFMpegDec *ffmpegdec;
+  GstPad *peer;
+  GstFormat bfmt;
+
+  bfmt = GST_FORMAT_BYTES;
+  peer = GST_PAD_PEER (ffmpegdec->sinkpad);
+  ffmpegdec = (GstFFMpegDec *) GST_PAD_PARENT (pad);
 
   if (!peer)
-    return FALSE;
+    goto no_peer;
 
-  if (gst_pad_query (peer, type, fmt, value))
+  /* just forward to peer */
+  if (gst_pad_query (peer, query))
     return TRUE;
 
+#if 0
   /* ok, do bitrate calc... */
   if ((type != GST_QUERY_POSITION && type != GST_QUERY_TOTAL) ||
            *fmt != GST_FORMAT_TIME || ffmpegdec->context->bit_rate == 0 ||
@@ -315,15 +319,24 @@ gst_ffmpegdec_query (GstPad * pad, GstQueryType type,
   if (ffmpegdec->pcache && type == GST_QUERY_POSITION)
     *value -= GST_BUFFER_SIZE (ffmpegdec->pcache);
   *value *= GST_SECOND / ffmpegdec->context->bit_rate;
+#endif
 
-  return TRUE;
+  return FALSE;
+
+no_peer:
+  {
+    return FALSE;
+  }
 }
 
 static gboolean
 gst_ffmpegdec_event (GstPad * pad, GstEvent * event)
 {
-  GstFFMpegDec *ffmpegdec = (GstFFMpegDec *) gst_pad_get_parent (pad);
-  GstPad *peer = GST_PAD_PEER (ffmpegdec->sinkpad);
+  GstFFMpegDec *ffmpegdec;
+  GstPad *peer;
+  
+  peer = GST_PAD_PEER (ffmpegdec->sinkpad);
+  ffmpegdec = (GstFFMpegDec *) GST_PAD_PARENT (pad);
 
   if (!peer)
     return FALSE;
@@ -380,13 +393,10 @@ gst_ffmpegdec_open (GstFFMpegDec *ffmpegdec)
   GstFFMpegDecClass *oclass =
       (GstFFMpegDecClass *) (G_OBJECT_GET_CLASS (ffmpegdec));
 
+  if (avcodec_open (ffmpegdec->context, oclass->in_plugin) < 0)
+    goto could_not_open;
+
   ffmpegdec->opened = TRUE;
-  if (avcodec_open (ffmpegdec->context, oclass->in_plugin) < 0) {
-    gst_ffmpegdec_close (ffmpegdec);
-    GST_DEBUG ("ffdec_%s: Failed to open FFMPEG codec",
-        oclass->in_plugin->name);
-    return FALSE;
-  }
 
   GST_LOG ("Opened ffmpeg codec %s", oclass->in_plugin->name);
 
@@ -418,12 +428,21 @@ gst_ffmpegdec_open (GstFFMpegDec *ffmpegdec)
   ffmpegdec->need_key = TRUE;
 
   return TRUE;
+
+  /* ERRORS */
+could_not_open:
+  {
+    gst_ffmpegdec_close (ffmpegdec);
+    GST_DEBUG ("ffdec_%s: Failed to open FFMPEG codec",
+        oclass->in_plugin->name);
+    return FALSE;
+  }
 }
 
 static GstPadLinkReturn
 gst_ffmpegdec_setcaps (GstPad * pad, GstCaps * caps)
 {
-  GstFFMpegDec *ffmpegdec = (GstFFMpegDec *) (gst_pad_get_parent (pad));
+  GstFFMpegDec *ffmpegdec = (GstFFMpegDec *) (GST_PAD_PARENT (pad));
   GstFFMpegDecClass *oclass =
       (GstFFMpegDecClass *) (G_OBJECT_GET_CLASS (ffmpegdec));
   GstStructure *structure;
@@ -856,27 +875,24 @@ gst_ffmpegdec_sink_event (GstPad * pad, GstEvent * event)
 static GstFlowReturn
 gst_ffmpegdec_chain (GstPad * pad, GstBuffer * inbuf)
 {
-  GstFFMpegDec *ffmpegdec = (GstFFMpegDec *) (gst_pad_get_parent (pad));
+  GstFFMpegDec *ffmpegdec = (GstFFMpegDec *) (GST_PAD_PARENT (pad));
   GstFFMpegDecClass *oclass =
       (GstFFMpegDecClass *) (G_OBJECT_GET_CLASS (ffmpegdec));
   guint8 *bdata, *data;
   gint bsize, size, len, have_data;
   guint64 in_ts = GST_BUFFER_TIMESTAMP (inbuf);
 
-  if (!ffmpegdec->opened) {
-    GST_ELEMENT_ERROR (ffmpegdec, CORE, NEGOTIATION, (NULL),
-        ("ffdec_%s: input format was not set before data start",
-            oclass->in_plugin->name));
-    return GST_FLOW_ERROR;
-  }
-
+  if (!ffmpegdec->opened)
+    goto not_negotiated;
+  
   GST_DEBUG_OBJECT (ffmpegdec,
       "Received new data of size %d, time %" GST_TIME_FORMAT,
       GST_BUFFER_SIZE (inbuf), GST_TIME_ARGS (GST_BUFFER_TIMESTAMP (inbuf)));
 
   /* parse cache joining */
   if (ffmpegdec->pcache) {
-    inbuf = gst_buffer_join (ffmpegdec->pcache, inbuf);
+    inbuf = gst_buffer_span (ffmpegdec->pcache, 0, inbuf,
+	    GST_BUFFER_SIZE (ffmpegdec->pcache) + GST_BUFFER_SIZE (inbuf));
     ffmpegdec->pcache = NULL;
     bdata = GST_BUFFER_DATA (inbuf);
     bsize = GST_BUFFER_SIZE (inbuf);
@@ -887,7 +903,7 @@ gst_ffmpegdec_chain (GstPad * pad, GstBuffer * inbuf)
    * ffmpeg devs know about it and will fix it (they said). */
   else if (oclass->in_plugin->id == CODEC_ID_SVQ1 ||
       oclass->in_plugin->id == CODEC_ID_SVQ3) {
-    inbuf = gst_buffer_copy_on_write (inbuf);
+    inbuf = gst_buffer_make_writable (inbuf);
     bdata = GST_BUFFER_DATA (inbuf);
     bsize = GST_BUFFER_SIZE (inbuf);
   } else {
@@ -949,6 +965,15 @@ gst_ffmpegdec_chain (GstPad * pad, GstBuffer * inbuf)
   gst_buffer_unref (inbuf);
 
   return GST_FLOW_OK;
+
+  /* ERRORS */
+not_negotiated:
+  {
+    GST_ELEMENT_ERROR (ffmpegdec, CORE, NEGOTIATION, (NULL),
+        ("ffdec_%s: input format was not set before data start",
+            oclass->in_plugin->name));
+    return GST_FLOW_NOT_NEGOTIATED;
+  }
 }
 
 static GstElementStateReturn
@@ -956,17 +981,26 @@ gst_ffmpegdec_change_state (GstElement * element)
 {
   GstFFMpegDec *ffmpegdec = (GstFFMpegDec *) element;
   gint transition = GST_STATE_TRANSITION (element);
+  GstElementStateReturn ret;
 
   switch (transition) {
-    case GST_STATE_PAUSED_TO_READY:
-      gst_ffmpegdec_close (ffmpegdec);
+    default:
       break;
   }
 
-  if (GST_ELEMENT_CLASS (parent_class)->change_state)
-    return GST_ELEMENT_CLASS (parent_class)->change_state (element);
+  ret = GST_ELEMENT_CLASS (parent_class)->change_state (element);
 
-  return GST_STATE_SUCCESS;
+  switch (transition) {
+    case GST_STATE_PAUSED_TO_READY:
+      GST_STREAM_LOCK (ffmpegdec->sinkpad);
+      gst_ffmpegdec_close (ffmpegdec);
+      GST_STREAM_UNLOCK (ffmpegdec->sinkpad);
+      break;
+    default:
+      break;
+  }
+
+  return ret;
 }
 
 static void

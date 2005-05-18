@@ -3,9 +3,9 @@ plugin_LTLIBRARIES = libgstffmpeg.la
 
 libgstffmpeg_la_SOURCES = gstffmpeg.c 		\
 			  gstffmpegcodecmap.c	\
-			  gstffmpegdec.c 
+			  gstffmpegdec.c 	\
+			  gstffmpegenc.c 	
 #			  gstffmpegdemux.c 	\
-#			  gstffmpegenc.c 	\
 #			  gstffmpegmux.c 	\
 #			  gstffmpegprotocol.c	\
 #			  gstffmpegcolorspace.c

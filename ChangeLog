@@ -1,3 +1,19 @@
+2005-05-18  Wim Taymans  <wim@fluendo.com>
+
+	* ext/ffmpeg/Makefile.am:
+	* ext/ffmpeg/gstffmpeg.c: (plugin_init):
+	* ext/ffmpeg/gstffmpegdec.c: (gst_ffmpegdec_query),
+	(gst_ffmpegdec_event), (gst_ffmpegdec_open),
+	(gst_ffmpegdec_setcaps), (gst_ffmpegdec_chain),
+	(gst_ffmpegdec_change_state):
+	* ext/ffmpeg/gstffmpegenc.c: (gst_ffmpegenc_class_init),
+	(gst_ffmpegenc_init), (gst_ffmpegenc_getcaps),
+	(gst_ffmpegenc_setcaps), (gst_ffmpegenc_chain_video),
+	(gst_ffmpegenc_chain_audio):
+	Some more porting. 
+	Make the encoders compile, they don't seem to work yet
+	though.
+
 2005-02-20  Ronald S. Bultje  <rbultje@ronald.bitfreak.net>
 
 	* ext/ffmpeg/gstffmpegdec.c: (gst_ffmpegdec_open),
