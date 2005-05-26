@@ -299,8 +299,8 @@ gst_ffmpegdec_query (GstPad * pad, GstQuery *query)
   GstFormat bfmt;
 
   bfmt = GST_FORMAT_BYTES;
-  peer = GST_PAD_PEER (ffmpegdec->sinkpad);
   ffmpegdec = (GstFFMpegDec *) GST_PAD_PARENT (pad);
+  peer = GST_PAD_PEER (ffmpegdec->sinkpad);
 
   if (!peer)
     goto no_peer;
@@ -335,12 +335,12 @@ gst_ffmpegdec_event (GstPad * pad, GstEvent * event)
   GstFFMpegDec *ffmpegdec;
   GstPad *peer;
   
-  peer = GST_PAD_PEER (ffmpegdec->sinkpad);
   ffmpegdec = (GstFFMpegDec *) GST_PAD_PARENT (pad);
+  peer = GST_PAD_PEER (ffmpegdec->sinkpad);
 
   if (!peer)
     return FALSE;
-
+  
   gst_event_ref (event);
   if (gst_pad_send_event (peer, event)) {
     gst_event_unref (event);

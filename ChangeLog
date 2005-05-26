@@ -1,3 +1,10 @@
+2005-05-26  Luca Ognibene  <luogni@tin.it>
+
+	* ext/ffmpeg/gstffmpegdec.c (gst_ffmpegdec_event) 
+	(gst_ffmpegdec_query): 
+	 Get the var before using it :) Fix
+	 segfaults on ffmpeg's event handling
+
 2005-05-18  Wim Taymans  <wim@fluendo.com>
 
 	* ext/ffmpeg/Makefile.am:
