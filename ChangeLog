@@ -1,5 +1,24 @@
 2007-11-15  Edward Hervey  <bilboed@bilboed.com>
 
+	* ext/ffmpeg/Makefile.am:
+	* ext/ffmpeg/gstffmpeg.c: (plugin_init):
+	* ext/ffmpeg/gstffmpeg.h:
+	* ext/ffmpeg/gstffmpegaudioresample.c:
+	(gst_ffmpegaudioresample_base_init),
+	(gst_ffmpegaudioresample_class_init),
+	(gst_ffmpegaudioresample_init), (gst_ffmpegaudioresample_finalize),
+	(gst_ffmpegaudioresample_transform_caps),
+	(gst_ffmpegaudioresample_transform_size),
+	(gst_ffmpegaudioresample_get_unit_size),
+	(gst_ffmpegaudioresample_set_caps),
+	(gst_ffmpegaudioresample_transform),
+	(gst_ffmpegaudioresample_register):
+	Added new ffaudioresample element using the ffmpeg resampling code.
+	It's (way) faster than audioresample, doesn't introduce latency, but
+	might cause a little bit of 'clicking'.
+
+2007-11-15  Edward Hervey  <bilboed@bilboed.com>
+
 	* Makefile.am:
 	* autogen.sh:
 	* configure.ac:

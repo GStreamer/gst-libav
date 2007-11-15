@@ -8,7 +8,8 @@ libgstffmpeg_la_SOURCES = gstffmpeg.c	\
 			  gstffmpegcfg.c	\
 			  gstffmpegdemux.c	\
 			  gstffmpegmux.c    \
-			  gstffmpegdeinterlace.c
+			  gstffmpegdeinterlace.c	\
+			  gstffmpegaudioresample.c
 # 	\
 # 			  gstffmpegscale.c
 
