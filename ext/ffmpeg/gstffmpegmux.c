@@ -673,6 +673,8 @@ gst_ffmpegmux_register (GstPlugin * plugin)
 
   in_plugin = first_oformat;
 
+  GST_LOG ("Registering muxers");
+
   while (in_plugin) {
     gchar *type_name;
     gchar *p;
@@ -682,11 +684,15 @@ gst_ffmpegmux_register (GstPlugin * plugin)
     /* Try to find the caps that belongs here */
     srccaps = gst_ffmpeg_formatid_to_caps (in_plugin->name);
     if (!srccaps) {
+      GST_WARNING ("Couldn't get source caps for muxer %s", in_plugin->name);
       goto next;
     }
     if (!gst_ffmpeg_formatid_get_codecids (in_plugin->name,
             &video_ids, &audio_ids)) {
       gst_caps_unref (srccaps);
+      GST_WARNING
+          ("Couldn't get sink caps for muxer %s, mapping maybe missing ?",
+          in_plugin->name);
       goto next;
     }
     videosinkcaps = video_ids ? gst_ffmpegmux_get_id_caps (video_ids) : NULL;
@@ -748,6 +754,8 @@ gst_ffmpegmux_register (GstPlugin * plugin)
   next:
     in_plugin = in_plugin->next;
   }
+
+  GST_LOG ("Finished registering muxers");
 
   return TRUE;
 }
