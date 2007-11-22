@@ -215,7 +215,7 @@ gst_ffmpegaudioresample_get_unit_size (GstBaseTransform * trans, GstCaps * caps,
   ret = gst_structure_get_int (structure, "channels", &channels);
   g_return_val_if_fail (ret, FALSE);
 
-  *size =  2 * channels;
+  *size = 2 * channels;
 
   return TRUE;
 }
@@ -278,6 +278,7 @@ gst_ffmpegaudioresample_transform (GstBaseTransform * trans, GstBuffer * inbuf,
 
   GST_BUFFER_DURATION(outbuf) = gst_util_uint64_scale (ret, GST_SECOND,
 						       resample->out_rate);
+  GST_BUFFER_SIZE (outbuf) = ret * 2 * resample->out_channels;
 
   GST_LOG_OBJECT (resample, "Output buffer duration:%"GST_TIME_FORMAT,
 		  GST_TIME_ARGS (GST_BUFFER_DURATION (outbuf)));

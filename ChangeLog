@@ -1,3 +1,10 @@
+2007-11-22  Edward Hervey  <bilboed@bilboed.com>
+
+	* ext/ffmpeg/gstffmpegaudioresample.c:
+	(gst_ffmpegaudioresample_get_unit_size),
+	(gst_ffmpegaudioresample_transform):
+	Correct the output size of the buffer.
+
 2007-11-15  Edward Hervey  <bilboed@bilboed.com>
 
 	* ext/ffmpeg/Makefile.am:
