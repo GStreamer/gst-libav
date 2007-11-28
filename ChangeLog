@@ -1,3 +1,14 @@
+2007-11-28  Edward Hervey  <bilboed@bilboed.com>
+
+	* configure.ac:
+	Temporarily remove fPIC option for building ffmpeg
+	* ffmpegrev:
+	Switch to latest ffmpeg checkout so people can enjoy all the niceties
+	that have just landed (mmx optimisations for vc1 and h263, bugfixes,..)
+	* ext/ffmpeg/gstffmpegmux.c: (gst_ffmpegmux_collected),
+	(gst_ffmpegmux_change_state):
+	Adjust code to ffmpeg API changes.
+
 2007-11-22  Edward Hervey  <bilboed@bilboed.com>
 
 	* ext/ffmpeg/gstffmpegaudioresample.c:

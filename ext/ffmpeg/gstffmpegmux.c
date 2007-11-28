@@ -481,7 +481,7 @@ gst_ffmpegmux_collected (GstCollectPads * pads, gpointer user_data)
     ffmpegmux->opened = TRUE;
 
     /* flush the header so it will be used as streamheader */
-    put_flush_packet (&ffmpegmux->context->pb);
+    put_flush_packet (ffmpegmux->context->pb);
   }
 
   /* take the one with earliest timestamp,
@@ -556,8 +556,8 @@ gst_ffmpegmux_collected (GstCollectPads * pads, gpointer user_data)
     /* close down */
     av_write_trailer (ffmpegmux->context);
     ffmpegmux->opened = FALSE;
-    put_flush_packet (&ffmpegmux->context->pb);
-    url_fclose (&ffmpegmux->context->pb);
+    put_flush_packet (ffmpegmux->context->pb);
+    url_fclose (ffmpegmux->context->pb);
     gst_pad_push_event (ffmpegmux->srcpad, gst_event_new_eos ());
     return GST_FLOW_UNEXPECTED;
   }
@@ -598,7 +598,7 @@ gst_ffmpegmux_change_state (GstElement * element, GstStateChange transition)
       }
       if (ffmpegmux->opened) {
         ffmpegmux->opened = FALSE;
-        url_fclose (&ffmpegmux->context->pb);
+        url_fclose (ffmpegmux->context->pb);
       }
       break;
     case GST_STATE_CHANGE_READY_TO_NULL:

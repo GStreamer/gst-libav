@@ -266,7 +266,11 @@ else
   FFMPEG_SUBDIRS=gst-libs
   AC_DEFINE(HAVE_AVI_H)
   AC_DEFINE([FFMPEG_SOURCE], ["local snapshot"], [Describes where the FFmpeg libraries come from.])
-  ac_configure_args="$ac_configure_args --disable-vhook --disable-ffserver --disable-ffplay --enable-pp --enable-gpl --enable-static --disable-shared --extra-cflags=-fPIC"
+  ac_configure_args="$ac_configure_args --disable-vhook --disable-ffserver --disable-ffplay --enable-pp --enable-gpl --enable-static --disable-shared" # --extra-cflags=-fPIC"
+  # FIXME : the -fPIC cflag is required when compiling on x86_64 apparently :(
+  AC_SUBST(FFMPEG_CO_DIR)
+  AC_SUBST(FFMPEG_SVN)
+  AC_SUBST(FFMPEG_REVISION)
   AC_CONFIG_SUBDIRS(gst-libs/ext/ffmpeg)
   AC_MSG_NOTICE([Using included FFMpeg code])
 fi
@@ -276,9 +280,6 @@ AC_SUBST(FFMPEG_LIBS)
 AC_SUBST(FFMPEG_SUBDIRS)
 AC_SUBST(POSTPROC_CFLAGS)
 AC_SUBST(POSTPROC_LIBS)
-AC_SUBST(FFMPEG_CO_DIR)
-AC_SUBST(FFMPEG_SVN)
-AC_SUBST(FFMPEG_REVISION)
   
 AC_DEFINE_UNQUOTED(HAVE_FFMPEG_UNINSTALLED, $HAVE_FFMPEG_UNINSTALLED,
                    [Defined if building against uninstalled FFmpeg source])
