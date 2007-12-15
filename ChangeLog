@@ -1,3 +1,13 @@
+2007-12-15  Sebastian Dröge  <slomo@circular-chaos.org>
+
+	Based on a patch by:
+	    Hans de Goede <j dot w dot r degoede at hhs dot nl>
+
+	* ext/ffmpeg/gstffmpegcfg.c: (gst_ffmpeg_pre_me_get_type),
+	  (gst_ffmpeg_pred_method_get_type):
+	  NULL-terminate the GEnumValue arrays, otherwise they will cause
+	  crashes. Fixes #503733.
+
 2007-12-09  Sebastian Dröge  <slomo@circular-chaos.org>
 
 	* configure.ac:
