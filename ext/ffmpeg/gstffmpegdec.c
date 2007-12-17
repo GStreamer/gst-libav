@@ -498,6 +498,7 @@ gst_ffmpegdec_open (GstFFMpegDec * ffmpegdec)
     case CODEC_ID_MPEG4:
     case CODEC_ID_MJPEG:
     case CODEC_ID_MP3:
+  case CODEC_ID_VC1:
       GST_LOG_OBJECT (ffmpegdec, "not using parser, blacklisted codec");
       ffmpegdec->pctx = NULL;
       break;

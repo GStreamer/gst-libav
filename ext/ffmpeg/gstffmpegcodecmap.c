@@ -631,9 +631,13 @@ gst_ffmpeg_codecid_to_caps (enum CodecID codec_id,
       break;
 
     case CODEC_ID_WMV3:
-    case CODEC_ID_VC1:
       caps = gst_ff_vid_caps_new (context, codec_id, "video/x-wmv",
           "wmvversion", G_TYPE_INT, 3, NULL);
+      break;
+    case CODEC_ID_VC1:
+      caps = gst_ff_vid_caps_new (context, codec_id, "video/x-wmv",
+				  "wmvversion", G_TYPE_INT, 3, "fourcc", GST_TYPE_FOURCC, 
+				  GST_MAKE_FOURCC('W', 'V', 'C', '1'), NULL);
       break;
     case CODEC_ID_QDM2:
       caps = gst_ff_aud_caps_new (context, codec_id, "audio/x-qdm2", NULL);
@@ -2051,7 +2055,14 @@ gst_ffmpeg_caps_to_codecid (const GstCaps * caps, AVCodecContext * context)
           id = CODEC_ID_WMV2;
           break;
         case 3:
-          id = CODEC_ID_WMV3;
+	  {
+	    guint32 fourcc;
+	    if (gst_structure_get_fourcc (structure, "fourcc", &fourcc)) {
+	      if (fourcc == GST_MAKE_FOURCC ('W', 'V', 'C', '1'))
+		id = CODEC_ID_VC1;
+	    } else
+	      id = CODEC_ID_WMV3;
+	  }
           break;
       }
     }

@@ -1,5 +1,12 @@
 2007-12-17  Edward Hervey  <edward.hervey@collabora.co.uk>
 
+	* ext/ffmpeg/gstffmpegcodecmap.c: (gst_ffmpeg_codecid_to_caps),
+	(gst_ffmpeg_caps_to_codecid):
+	* ext/ffmpeg/gstffmpegdec.c: (gst_ffmpegdec_open):
+	Handle VC-1 properly , which is handled differently from WMV3.
+
+2007-12-17  Edward Hervey  <edward.hervey@collabora.co.uk>
+
 	* autogen.sh:
 	Fix call to ffmpegrev
 	* configure.ac:
