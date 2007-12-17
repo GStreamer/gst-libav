@@ -1,3 +1,14 @@
+2007-12-17  Edward Hervey  <edward.hervey@collabora.co.uk>
+
+	* autogen.sh:
+	Fix call to ffmpegrev
+	* configure.ac:
+	Re-apply -fPIC extra-cflag for ffmpeg while removing support for the
+	flac encoder which is currently broken for x86/32bits with -fPIC.
+	* ffmpegrev:
+	Switch to latest upstream revision so we can have the split-up for
+	flac mmx optimizations.
+
 2007-12-15  Sebastian Dröge  <slomo@circular-chaos.org>
 
 	Based on a patch by:

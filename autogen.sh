@@ -6,10 +6,7 @@ package=gst-ffmpeg
 srcfile=configure.ac
 
 # FFMPEG specific properties
-. ffmpegrev
-
-# ffmpeg revisions that work: 6315, 10844, 10876, 10910, 10932, 10939
-
+. ./ffmpegrev
 
 # a quick cvs co if necessary to alleviate the pain - may remove this
 # when developers get a clue ;)
