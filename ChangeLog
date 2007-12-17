@@ -1,5 +1,11 @@
 2007-12-17  Edward Hervey  <edward.hervey@collabora.co.uk>
 
+	* configure.ac:
+	Minor typo in disabling cavs decoder. Now compiles AND works on x86 32
+	and 64 bits ! Time to merge :)
+
+2007-12-17  Edward Hervey  <edward.hervey@collabora.co.uk>
+
 	* ext/ffmpeg/gstffmpegcodecmap.c: (gst_ffmpeg_codecid_to_caps),
 	(gst_ffmpeg_caps_to_codecid):
 	* ext/ffmpeg/gstffmpegdec.c: (gst_ffmpegdec_open):

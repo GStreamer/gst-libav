@@ -270,7 +270,7 @@ else
   FFMPEG_SUBDIRS=gst-libs
   AC_DEFINE(HAVE_AVI_H)
   AC_DEFINE([FFMPEG_SOURCE], ["local snapshot"], [Describes where the FFmpeg libraries come from.])
-  ac_configure_args="$ac_configure_args --disable-vhook --disable-ffserver --disable-ffplay --enable-pp --enable-gpl --enable-static --disable-shared --disable-encoder=flac --disable-cavs --extra-cflags=-fPIC"
+  ac_configure_args="$ac_configure_args --disable-vhook --disable-ffserver --disable-ffplay --enable-pp --enable-gpl --enable-static --disable-shared --disable-encoder=flac --disable-decoder=cavs --extra-cflags=-fPIC"
   AC_SUBST(FFMPEG_CO_DIR)
   AC_SUBST(FFMPEG_SVN)
   AC_SUBST(FFMPEG_REVISION)
