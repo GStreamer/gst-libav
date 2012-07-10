@@ -117,7 +117,7 @@ gst_ffmpeg_formatid_to_caps (const gchar *format_name);
  */
 
 GstCaps *
-gst_ffmpeg_pixfmt_to_caps (enum PixelFormat pix_fmt, AVCodecContext * context, enum CodecID codec_id);
+gst_ffmpeg_pixfmt_to_caps (enum PixelFormat pix_fmt, AVCodecContext * context, enum CodecID codec_id, gboolean encode);
 
 /*
  * _formatid_get_codecids () can be used to get the codecIDs
