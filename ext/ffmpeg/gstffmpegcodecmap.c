@@ -1200,6 +1200,12 @@ gst_ffmpeg_codecid_to_caps (enum CodecID codec_id,
       caps = gst_ff_vid_caps_new (context, codec_id, "video/x-dnxhd", NULL);
       break;
 
+    case CODEC_ID_PRORES:
+      caps =
+          gst_ff_vid_caps_new (context, codec_id, encode, "video/x-prores",
+          NULL);
+      break;
+
     case CODEC_ID_MIMIC:
       caps = gst_ff_vid_caps_new (context, codec_id, "video/x-mimic", NULL);
       break;
