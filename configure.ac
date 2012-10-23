@@ -328,7 +328,15 @@ else
   fi
 
   # if we are cross-compiling, tell ffmpeg so
-  target_os=`echo $host_os | sed 's/-gnu//'`
+  case $host in
+      *android*)
+        target_os=linux
+      ;;
+      *)
+        target_os=`echo $host_os | sed 's/-gnu//'`
+      ;;
+  esac
+
   if test "x$cross_compiling" = xyes; then
     embffmpeg_configure_args="$embffmpeg_configure_args --enable-cross-compile \
         --target-os=$target_os --arch=$host_cpu --cross-prefix=$host_alias-"
