@@ -1114,6 +1114,9 @@ get_output_buffer (GstFFMpegVidDec * ffmpegdec, GstVideoCodecFrame * frame)
 
   GST_LOG_OBJECT (ffmpegdec, "get output buffer");
 
+  if (!ffmpegdec->output_state)
+    goto not_negotiated;
+
   ret =
       gst_video_decoder_allocate_output_frame (GST_VIDEO_DECODER (ffmpegdec),
       frame);
@@ -1154,8 +1157,13 @@ get_output_buffer (GstFFMpegVidDec * ffmpegdec, GstVideoCodecFrame * frame)
   /* special cases */
 alloc_failed:
   {
-    GST_DEBUG_OBJECT (ffmpegdec, "pad_alloc failed");
+    GST_DEBUG_OBJECT (ffmpegdec, "allocation failed");
     return ret;
+  }
+not_negotiated:
+  {
+    GST_DEBUG_OBJECT (ffmpegdec, "not negotiated");
+    return GST_FLOW_NOT_NEGOTIATED;
   }
 }
 
