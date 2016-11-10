@@ -380,7 +380,7 @@ else
         target_os=darwin
       ;;
       *)
-        target_os=`echo $host_os | sed 's/-gnu//'`
+        target_os=`echo $host_os | sed 's/-gnu.*//'`
       ;;
   esac
 
